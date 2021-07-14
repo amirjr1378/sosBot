@@ -21,6 +21,7 @@ export interface ChatbotState {
   handleFormSubmit: (payload?: any) => void;
   waitForAnEvent: (eventName: string) => Promise<any>;
   waitForUserResponse: () => Promise<any>;
+  cancelWaitForUserResponse: () => void;
   popLastMessage: () => void;
   inputIsActive: boolean;
   setInputIsActive: Dispatch<React.SetStateAction<boolean>>;

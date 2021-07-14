@@ -40,21 +40,21 @@ export function useChatBot(props: ChatbotPropTypes) {
     sendMessage,
     emitter,
     handleFormSubmit,
-    waitForUserResponse,
     popLastMessage,
     waitForAnEvent,
+    waitForUserResponse,
+    cancelWaitForUserResponse,
     inputIsActive,
     setInputIsActive,
   };
 
   // Functions
   function handleFormSubmit(payload: any) {
-    setInputIsActive(false);
     emitter.fire('form_submission', payload);
+    cancelWaitForUserResponse();
   }
 
   async function waitForAnEvent(eventName: string) {
-    setInputIsActive(true);
     return new Promise((resolve) => {
       emitter.once(eventName, (eventObj) => {
         resolve(eventObj.data);
@@ -63,7 +63,14 @@ export function useChatBot(props: ChatbotPropTypes) {
   }
 
   async function waitForUserResponse() {
+    setInputIsActive(true);
+    document.getElementById('chat-input')?.focus();
     return waitForAnEvent('form_submission');
+  }
+
+  function cancelWaitForUserResponse() {
+    setInputIsActive(false);
+    emitter.off('form_submission');
   }
 
   function scrollToBottom() {
@@ -86,20 +93,16 @@ export function useChatBot(props: ChatbotPropTypes) {
   }
 
   function sendMessage(step: ChatbotStep) {
-    setAppHistory((state) => [
-      ...state,
-      Object.assign({}, step, { key: activeKey }),
-    ]);
+    setAppHistory((state) => [...state, { ...step, key: activeKey }]);
     // find the correct component to attach on messages
     const widget = widgets.find((reg) => reg.type === step.type);
     if (widget) {
-      let widgetComponentProps = Object.assign({}, chatState, step);
+      let widgetComponentProps = { ...chatState, ...step };
       if (step.mapStateToProps) {
-        widgetComponentProps = Object.assign(
-          {},
-          widgetComponentProps,
-          step.mapStateToProps?.(chatState)
-        );
+        widgetComponentProps = {
+          ...widgetComponentProps,
+          ...step.mapStateToProps?.(chatState),
+        };
       }
       if (widget.Component) {
         setMessages((state) => {
